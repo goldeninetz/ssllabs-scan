@@ -21,25 +21,25 @@
 package main
 
 import (
+	"bufio"
 	"crypto/tls"
+	"encoding/json"
+	"errors"
+	"flag"
+	"fmt"
 	"io"
+	"log"
+	"math/rand"
+	"net"
+	"net/http"
+	"net/url"
+	"os"
+	"sort"
+	"strconv"
+	"strings"
+	"sync/atomic"
+	"time"
 )
-import "errors"
-import "encoding/json"
-import "flag"
-import "fmt"
-import "bufio"
-import "os"
-import "log"
-import "math/rand"
-import "net"
-import "net/http"
-import "net/url"
-import "strconv"
-import "strings"
-import "sync/atomic"
-import "time"
-import "sort"
 
 const (
 	LOG_NONE     = -1
@@ -54,7 +54,7 @@ const (
 	LOG_TRACE    = 8
 )
 
-var USER_AGENT = "ssllabs-scan v1.5.0 (dev $Id$)"
+var USER_AGENT = "ssllabs-scan v1.5.0 (dev $makeversion$)"
 
 var logLevel = LOG_NOTICE
 
@@ -565,7 +565,13 @@ func invokeGetRepeatedly(url string) (*http.Response, []byte, error) {
 					log.Printf("[DEBUG] HTTP request failed with EOF (ref#2)")
 				}
 			} else {
-				log.Fatalf("[ERROR] HTTP request failed: %v (ref#2)", err.Error())
+				if retryCount < 5 {
+					if logLevel >= LOG_WARNING {
+						log.Printf("[WARNING] Attempt %v HTTP request failed: %v (ref#2)", retryCount, err.Error())
+					}
+				} else {
+					log.Fatalf("[ERROR] HTTP request failed: %v (ref#2)", err.Error())
+				}
 			}
 
 			retryCount++
@@ -1072,6 +1078,11 @@ func main() {
 	flag.Parse()
 
 	if *conf_email == "" {
+		if *conf_version {
+			fmt.Println(USER_AGENT)
+			fmt.Println("API location: " + apiLocation)
+			return
+		}
 		// email is required
 		log.Fatalf("[ERROR] Email address cannot be empty. Please use --email flag and pass your registered organization email")
 	} else {
