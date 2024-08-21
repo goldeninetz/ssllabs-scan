@@ -566,9 +566,9 @@ func invokeGetRepeatedly(url string) (*http.Response, []byte, error) {
 				}
 			} else {
 				if retryCount < 5 {
-					if logLevel >= LOG_WARNING {
+//					if logLevel >= LOG_WARNING {
 						log.Printf("[WARNING] Attempt %v HTTP request failed: %v (ref#2)", retryCount, err.Error())
-					}
+//					}
 				} else {
 					log.Fatalf("[ERROR] HTTP request failed: %v (ref#2)", err.Error())
 				}
